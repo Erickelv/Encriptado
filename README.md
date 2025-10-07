@@ -19,7 +19,7 @@
 * **Librería: `cryptography`**
     * **¿Por qué?** Es la biblioteca de criptografía estándar y más recomendada en Python, mantenida por la *Python Cryptographic Authority* (PyCA). Utilizar esta librería garantiza que se están implementando algoritmos criptográficos de forma correcta y segura, evitando errores comunes que podrían comprometer la seguridad. Proporciona abstracciones de alto nivel que son seguras por defecto.
 
-### Instalación y Uso 🚀
+### Instalación y Uso 
 
 Sigue estos pasos para poner en marcha el programa en tu máquina local.
 
