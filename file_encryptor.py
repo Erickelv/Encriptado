@@ -2,81 +2,63 @@ import os
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
-import getpass 
-def generate_key_from_password(password: str, salt: bytes) -> bytes:
-    """
-    Genera una clave criptográfica segura a partir de una contraseña y una sal.
-    """
+import getpass
+def generar_clave(password, sal):
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
-        length=32,  
-        salt=salt,
-        iterations=480000, 
+        length=32,
+        salt=sal,
+        iterations=480000
     )
     return kdf.derive(password.encode())
-
-def encrypt_file(file_path: str, password: str):
-    """
-    Cifra un archivo usando la contraseña proporcionada.
-    """
+def cifrar_archivo(ruta, password):
     try:
-        with open(file_path, 'rb') as f:
-            data = f.read()
-        salt = os.urandom(16)
-        key = generate_key_from_password(password, salt)
-        aesgcm = AESGCM(key)
-        nonce = os.urandom(12) 
-        encrypted_data = aesgcm.encrypt(nonce, data, None)
-        encrypted_file_path = file_path + ".enc"
-        with open(encrypted_file_path, 'wb') as f:
-            f.write(salt)
+        with open(ruta, 'rb') as f:
+            datos = f.read()
+        sal = os.urandom(16)
+        clave = generar_clave(password, sal)
+        aes = AESGCM(clave)
+        nonce = os.urandom(12)
+        datos_cifrados = aes.encrypt(nonce, datos, None)
+        nueva_ruta = ruta + ".enc"
+        with open(nueva_ruta, 'wb') as f:
+            f.write(sal)
             f.write(nonce)
-            f.write(encrypted_data)
-        
-        print(f" ¡Éxito! Archivo cifrado guardado como: {encrypted_file_path}")
-
+            f.write(datos_cifrados)
+        print("Archivo cifrado como:", nueva_ruta)
     except FileNotFoundError:
-        print(f" Error: El archivo '{file_path}' no fue encontrado.")
+        print("No se encontró el archivo:", ruta)
     except Exception as e:
-        print(f" Ocurrió un error inesperado durante el cifrado: {e}")
-
-def decrypt_file(encrypted_file_path: str, password: str):
-    """
-    Descifra un archivo .enc usando la contraseña correcta.
-    """
+        print("Error al cifrar:", e)
+def descifrar_archivo(ruta, password):
     try:
-        with open(encrypted_file_path, 'rb') as f:
-            salt = f.read(16)
+        with open(ruta, 'rb') as f:
+            sal = f.read(16)
             nonce = f.read(12)
-            encrypted_data = f.read()
-        key = generate_key_from_password(password, salt)
-        aesgcm = AESGCM(key)
-        decrypted_data = aesgcm.decrypt(nonce, encrypted_data, None)
-        decrypted_file_path = encrypted_file_path.replace('.enc', '.decrypted')
-        with open(decrypted_file_path, 'wb') as f:
-            f.write(decrypted_data)
-            
-        print(f" ¡Éxito! Archivo descifrado guardado como: {decrypted_file_path}")
+            datos_cifrados = f.read()
+        clave = generar_clave(password, sal)
+        aes = AESGCM(clave)
+        datos_descifrados = aes.decrypt(nonce, datos_cifrados, None)
 
+        nueva_ruta = ruta[:-4] + ".dec"
+        with open(nueva_ruta, 'wb') as f:
+            f.write(datos_descifrados)
+        print("Archivo descifrado como:", nueva_ruta)
     except FileNotFoundError:
-        print(f" Error: El archivo cifrado '{encrypted_file_path}' no fue encontrado.")
+        print("No se encontró el archivo cifrado:", ruta)
     except Exception as e:
-        print(f" Error al descifrar. ¿Es la contraseña correcta? Detalles: {e}")
+        print("Error al descifrar:", e)
 def main():
-    print("--- Herramienta de Cifrado y Descifrado de Archivos ---")
-    
-    choice = input("¿Deseas (c)ifrar o (d)escifrar un archivo? ").lower()
-
-    if choice not in ['c', 'd']:
-        print("Opción no válida. Saliendo del programa.")
+    print("=== Programa para Cifrar o Descifrar Archivos ===")
+    opcion = input("¿Deseas cifrar (c) o descifrar (d)? ").lower()
+    if opcion not in ['c', 'd']:
+        print("Opción no válida.")
         return
-
-    file_path = input("Introduce la ruta completa del archivo: ")
-    password = getpass.getpass("Introduce tu contraseña segura: ")
-
-    if choice == 'c':
-        encrypt_file(file_path, password)
-    elif choice == 'd':
-        decrypt_file(file_path, password)
+    ruta = input("Ingresa la ruta completa del archivo (nombre completo):")
+    password = getpass.getpass("Contraseña: ")
+    if opcion == 'c':
+        cifrar_archivo(ruta, password)
+    else:
+        descifrar_archivo(ruta, password)
 if __name__ == "__main__":
     main()
